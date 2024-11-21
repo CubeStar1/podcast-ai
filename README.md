@@ -1,4 +1,4 @@
-# PodcastAI - Content to Audio Converter
+# PodcastAI - PDF to Podcast Generator
 
 PodcastAI transforms PDFs and text content into engaging podcast-style conversations using AI voices. Built with Next.js 14, Supabase, and the PlayNote API.
 
