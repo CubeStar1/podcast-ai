@@ -2,7 +2,7 @@
 
 PodcastAI transforms PDFs and text content into engaging podcast-style conversations using AI voices. Built with Next.js 14, Supabase, and the PlayNote API.
 
-![PodcastAI Main Page](https://github.com/CubeStar1/podcast-ai/blob/master/public/podcasts-ai-logo.png)
+![PodcastAI Main Page](https://github.com/CubeStar1/podcast-ai/blob/master/public/podcasts-ai-main.jpg)
 
 ## Core Features
 
