@@ -45,8 +45,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname()
 
   return (
-    <Sidebar collapsible="icon" {...props}>
-      <SidebarHeader>
+    <Sidebar variant="floating" className="mt-16 h-[calc(100%-4rem)]">
+          <SidebarHeader>
 
       </SidebarHeader>
       <SidebarContent>

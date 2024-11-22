@@ -1,7 +1,5 @@
-"use client";
-
-import { useEffect, useState } from "react";
-import { createSupabaseBrowser } from "@/lib/supabase/client";
+import { createSupabaseServer } from "@/lib/supabase/server"
+import { cookies } from "next/headers"
 import {
   Table,
   TableBody,
@@ -9,37 +7,32 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { FileText, Plus } from "lucide-react";
-import Link from "next/link";
+} from "@/components/ui/table"
+import { Button } from "@/components/ui/button"
+import { FileText, Plus } from "lucide-react"
+import Link from "next/link"
+import { QuizActions } from "@/app/components/quiz/quiz-actions"
 
 interface Quiz {
-  id: string;
-  title: string;
-  created_at: string;
-  questions: any[];
-  score?: number;
+  id: string
+  title: string
+  created_at: string
+  questions: any[]
+  score?: number
 }
 
-export default function QuizHistory() {
-  const [quizzes, setQuizzes] = useState<Quiz[]>([]);
-  const supabase = createSupabaseBrowser();
+export default async function QuizHistory() {
+  const supabase = createSupabaseServer()
 
-  useEffect(() => {
-    async function fetchQuizzes() {
-      const { data, error } = await supabase
-        .from('quizzes')
-        .select('*')
-        .order('created_at', { ascending: false });
+  // Get the current user
+  const { data: { user } } = await supabase.auth.getUser()
 
-      if (data) {
-        setQuizzes(data);
-      }
-    }
-
-    fetchQuizzes();
-  }, [supabase]);
+  // Fetch quizzes on the server
+  const { data: quizzes } = await supabase
+    .from('quizzes')
+    .select('*')
+    .eq('user_id', user?.id)
+    .order('created_at', { ascending: false })
 
   return (
     <>
@@ -65,7 +58,7 @@ export default function QuizHistory() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {quizzes.map((quiz) => (
+            {quizzes?.map((quiz) => (
               <TableRow key={quiz.id}>
                 <TableCell className="font-medium">{quiz.title}</TableCell>
                 <TableCell>
@@ -74,11 +67,7 @@ export default function QuizHistory() {
                 <TableCell>{quiz.questions.length}</TableCell>
                 <TableCell>{quiz.score ?? "Not taken"}</TableCell>
                 <TableCell>
-                  <Button variant="ghost" size="sm" asChild>
-                    <Link href={`/quiz/${quiz.id}`}>
-                      <FileText className="h-4 w-4" />
-                    </Link>
-                  </Button>
+                  <QuizActions quiz={quiz} />
                 </TableCell>
               </TableRow>
             ))}
@@ -86,5 +75,5 @@ export default function QuizHistory() {
         </Table>
       </div>
     </>
-  );
+  )
 }
