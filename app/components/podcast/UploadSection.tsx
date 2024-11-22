@@ -16,7 +16,7 @@ export function UploadSection({ file, loading, onFileChange, onUpload }: UploadS
         <div>
           <h1 className="text-2xl font-bold">Convert PDF to Podcast</h1>
           <p className="text-muted-foreground mt-2">
-            Upload your PDF and we'll convert it into an engaging podcast conversation.
+            Upload your PDF and we&apos;ll convert it into an engaging podcast conversation.
           </p>
         </div>
 
