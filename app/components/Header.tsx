@@ -25,9 +25,9 @@ const components = [
     description: "Get quick summaries of your documents"
   },
   {
-    title: "Query",
-    href: "/query",
-    description: "Ask questions about your documents"
+    title: "Quiz",
+    href: "/quiz",
+    description: "Create quizzes based on your documents"
   }
 ]
 

@@ -50,9 +50,18 @@ export async function POST(request: Request) {
     const data = await response.json()
     console.log('PlayNote API Response:', data)
 
+    // Return all relevant data from the API response
     return NextResponse.json({ 
-      success: true, 
-      playNoteId: data.id 
+      success: true,
+      playNoteId: data.id,
+      ownerId: data.ownerId,
+      name: data.name,
+      sourceFileUrls: data.sourceFileUrls,
+      synthesisStyle: data.synthesisStyle,
+      voice1: data.voice1,
+      voice2: data.voice2,
+      requestedAt: data.requestedAt,
+      status: 'generating'
     })
 
   } catch (error) {

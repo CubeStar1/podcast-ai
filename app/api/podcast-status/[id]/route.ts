@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server'
 
+export const dynamic = 'force-dynamic'
+
 export async function GET(
   request: Request,
   { params }: { params: { id: string } }
@@ -15,7 +17,10 @@ export async function GET(
       'accept': 'application/json'
     }
 
-    const response = await fetch(url, { headers })
+    const response = await fetch(url, { 
+      headers,
+      cache: 'no-store'
+    })
     
     if (!response.ok) {
       const errorText = await response.text()
@@ -24,14 +29,21 @@ export async function GET(
     }
 
     const data = await response.json()
-    console.log('data', data)
+    
     return NextResponse.json({
-      status: data.status,
+      id: data.id,
+      ownerId: data.ownerId,
+      name: data.name,
+      sourceFileUrl: data.sourceFileUrls?.[0],
       audioUrl: data.audioUrl,
-      error: data.error,
-      progress: data.progress // Some APIs provide progress information
+      synthesisStyle: data.synthesisStyle,
+      voice1: data.voice1,
+      voice2: data.voice2,
+      status: data.status,
+      duration: data.duration,
+      requestedAt: data.requestedAt,
+      createdAt: data.createdAt
     })
-
   } catch (error) {
     console.error('Error:', error)
     return NextResponse.json(

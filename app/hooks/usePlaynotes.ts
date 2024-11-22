@@ -12,7 +12,15 @@ export function usePlaynotes() {
       const response = await fetch('/api/playnotes')
       if (!response.ok) throw new Error('Failed to fetch playnotes')
       const data = await response.json()
-      setPlaynotes(data)
+      
+      // Sort by creation date and put generating ones first
+      const sortedData = data.sort((a: PlayNote, b: PlayNote) => {
+        if (a.status === 'generating' && b.status !== 'generating') return -1
+        if (a.status !== 'generating' && b.status === 'generating') return 1
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      })
+      
+      setPlaynotes(sortedData)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch playnotes')
     } finally {

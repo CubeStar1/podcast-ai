@@ -1,6 +1,6 @@
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { PlayCircle, FileText, MoreHorizontal, Link, Trash } from 'lucide-react'
+import { PlayCircle, FileText, MoreHorizontal, Link, Trash, Loader2 } from 'lucide-react'
 import { 
   DropdownMenu,
   DropdownMenuContent,
@@ -45,47 +45,57 @@ export function PlaynotesList({ playnotes, onPlay, onDelete }: PlaynotesListProp
                 <div className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm text-muted-foreground">
                   <span>{new Date(note.created_at).toLocaleDateString()}</span>
                   <span>•</span>
-                  <span>{Math.round(note.duration / 60)} mins</span>
+                  {note.status === 'generating' ? (
+                    <span className="text-primary">Generating...</span>
+                  ) : (
+                    <span>{Math.round(note.duration / 60)} mins</span>
+                  )}
                 </div>
               </div>
 
               <div className="flex items-center gap-1 sm:gap-2 shrink-0">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 sm:h-10 sm:w-10 rounded-full"
-                  onClick={() => onPlay(note)}
-                >
-                  <PlayCircle className="h-4 w-4 sm:h-5 sm:w-5" />
-                </Button>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
+                {note.status === 'completed' ? (
+                  <>
                     <Button
                       variant="ghost"
                       size="icon"
                       className="h-8 w-8 sm:h-10 sm:w-10 rounded-full"
+                      onClick={() => onPlay(note)}
                     >
-                      <MoreHorizontal className="h-4 w-4 sm:h-5 sm:w-5" />
+                      <PlayCircle className="h-4 w-4 sm:h-5 sm:w-5" />
                     </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem
-                      onClick={() => note.audio_url && copyLink(note.audio_url)}
-                    >
-                      <Link className="h-4 w-4 mr-2" />
-                      Copy Link
-                    </DropdownMenuItem>
-                    {onDelete && (
-                      <DropdownMenuItem
-                        className="text-destructive"
-                        onClick={() => onDelete(note.id)}
-                      >
-                        <Trash className="h-4 w-4 mr-2" />
-                        Delete
-                      </DropdownMenuItem>
-                    )}
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 sm:h-10 sm:w-10 rounded-full"
+                        >
+                          <MoreHorizontal className="h-4 w-4 sm:h-5 sm:w-5" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem
+                          onClick={() => note.audio_url && copyLink(note.audio_url)}
+                        >
+                          <Link className="h-4 w-4 mr-2" />
+                          Copy Link
+                        </DropdownMenuItem>
+                        {onDelete && (
+                          <DropdownMenuItem
+                            className="text-destructive"
+                            onClick={() => onDelete(note.id)}
+                          >
+                            <Trash className="h-4 w-4 mr-2" />
+                            Delete
+                          </DropdownMenuItem>
+                        )}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </>
+                ) : (
+                  <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                )}
               </div>
             </div>
           </Card>

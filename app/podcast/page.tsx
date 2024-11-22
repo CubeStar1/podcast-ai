@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { usePlaynoteGeneration } from '@/app/hooks/usePlaynoteGeneration'
 import { usePlaynotes } from '@/app/hooks/usePlaynotes'
 import { UploadSection } from '@/app/components/podcast/UploadSection'
@@ -9,6 +9,7 @@ import { FloatingPlayer } from '@/app/components/podcast/FloatingPlayer'
 import { Card } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Loader2 } from 'lucide-react'
 import type { PlayNote } from '@/app/types/playnote'
 
 export default function PodcastPage() {
@@ -18,14 +19,102 @@ export default function PodcastPage() {
     setFile,
     loading,
     status,
-    uploadAndGenerate
+    setStatus,
+    playNoteId,
+    setPlayNoteId,
+    uploadAndGenerate,
+    savePlaynote
   } = usePlaynoteGeneration()
   const [currentPlayNote, setCurrentPlayNote] = useState<PlayNote | null>(null)
+  const [progress, setProgress] = useState(0)
+
+  // Check for in-progress generations on mount
+  useEffect(() => {
+    const checkInProgressGenerations = async () => {
+      try {
+        const response = await fetch('/api/playnotes/in-progress')
+        if (!response.ok) return
+        
+        const { inProgress } = await response.json()
+        if (inProgress?.id) {
+          setPlayNoteId(inProgress.id)
+          setStatus('generating')
+        }
+      } catch (error) {
+        console.error('Error checking in-progress generations:', error)
+      }
+    }
+
+    checkInProgressGenerations()
+  }, [setPlayNoteId, setStatus])
+
+  // Poll for status only when we have a playNoteId AND status is 'generating'
+  useEffect(() => {
+    if (!playNoteId || status !== 'generating') return
+
+    let retryTimeout: NodeJS.Timeout
+    let failedAttempts = 0
+    const MAX_RETRIES = 3
+
+    const checkStatus = async () => {
+      try {
+        const response = await fetch(`/api/podcast-status/${playNoteId}`, {
+          cache: 'no-store'
+        })
+        
+        if (response.status === 429) {
+          failedAttempts++
+          if (failedAttempts <= MAX_RETRIES) {
+            const delay = Math.min(1000 * Math.pow(2, failedAttempts), 30000)
+            retryTimeout = setTimeout(checkStatus, delay)
+            return false
+          }
+          return true
+        }
+
+        const data = await response.json()
+        failedAttempts = 0
+
+        if (data.status === 'completed') {
+          setProgress(100)
+          setStatus('completed')
+          await savePlaynote(data)
+          refetch()
+          return true
+        } else if (data.status === 'failed') {
+          setStatus('failed')
+          return true
+        } else if (data.status === 'generating') {
+          setProgress(prev => Math.min(prev + 10, 90))
+        }
+        return false
+      } catch (error) {
+        console.error('Status check error:', error)
+        setStatus('failed')
+        return true
+      }
+    }
+
+    // Set up polling with initial check included in the interval
+    const interval = setInterval(async () => {
+      const shouldStop = await checkStatus()
+      if (shouldStop) {
+        clearInterval(interval)
+      }
+    }, 15000) // Check every 15 seconds
+
+    // Cleanup
+    return () => {
+      clearInterval(interval)
+      clearTimeout(retryTimeout)
+    }
+  }, [playNoteId, refetch, savePlaynote, status, setStatus])
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0]
     if (selectedFile) {
       setFile(selectedFile)
+      setProgress(0) // Reset progress
     }
   }
 
@@ -41,16 +130,28 @@ export default function PodcastPage() {
               onUpload={uploadAndGenerate}
             />
 
-            {status && (
+            {(loading || status) && (
               <Card className="p-4 sm:p-6">
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <h2 className="text-lg font-semibold">Processing Status</h2>
-                    <span className="text-sm text-muted-foreground capitalize">
-                      {status}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      {loading && <Loader2 className="h-4 w-4 animate-spin" />}
+                      <span className="text-sm text-muted-foreground capitalize">
+                        {loading ? 'Uploading' : status}
+                      </span>
+                    </div>
                   </div>
-                  <Progress value={status === 'completed' ? 100 : 50} />
+                  <Progress value={progress} className="h-2" />
+                  <p className="text-sm text-muted-foreground">
+                    {loading 
+                      ? 'Uploading your file...'
+                      : status === 'completed'
+                      ? 'Podcast generated successfully!'
+                      : status === 'generating'
+                      ? 'Converting your content into a podcast...'
+                      : 'Starting conversion...'}
+                  </p>
                 </div>
               </Card>
             )}
